@@ -387,14 +387,14 @@ static int verify_esp(
                 relax_checks ||
                 detect_container() > 0;
 
-        r = verify_fsroot_dir(pfd, p, flags, relax_checks ? NULL : &devid);
-        if (r < 0)
-                return r;
-
         /* In a container we don't have access to block devices, skip this part of the verification, we trust
          * the container manager set everything up correctly on its own. */
         if (relax_checks)
                 goto finish;
+
+        r = verify_fsroot_dir(pfd, p, flags, relax_checks ? NULL : &devid);
+        if (r < 0)
+                return r;
 
         /* If we are unprivileged we ask udev for the metadata about the partition. If we are privileged we
          * use blkid instead. Why? Because this code is called from 'bootctl' which is pretty much an
@@ -760,12 +760,12 @@ static int verify_xbootldr(
                 getenv_bool("SYSTEMD_RELAX_XBOOTLDR_CHECKS") > 0 ||
                 detect_container() > 0;
 
+        if (relax_checks)
+                goto finish;
+
         r = verify_fsroot_dir(pfd, p, flags, relax_checks ? NULL : &devid);
         if (r < 0)
                 return r;
-
-        if (relax_checks)
-                goto finish;
 
         if (unprivileged_mode)
                 r = verify_xbootldr_udev(devid, flags, ret_uuid);
